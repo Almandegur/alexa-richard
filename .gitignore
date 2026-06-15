@@ -1,4 +1,8 @@
 page.html
 build.py
+make_variants.py
+compare.html
+HANDOFF.md
+project.css
 assets/
 *.png
