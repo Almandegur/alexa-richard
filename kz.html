@@ -148,7 +148,9 @@ var ov=document.getElementById('bsr-ov');
 document.body.appendChild(ov); /* escape any transformed Tilda ancestor so fixed+z-index always wins */
 function op(e){if(e)e.preventDefault();ov.classList.add('on');document.body.style.overflow='hidden';}
 function cl(){ov.classList.remove('on');document.body.style.overflow='';}
-document.querySelectorAll('a[href*="popup:myform"]').forEach(function(a){a.addEventListener('click',op);});
+/* delegate on document: Tilda re-renders the zero-block button after load, so a direct listener
+   would be lost. Delegation catches the click no matter how the node is rebuilt. */
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href*="popup:myform"]');if(a){op(e);}},true);
 document.getElementById('bsr-close').addEventListener('click',cl);
 ov.addEventListener('click',function(e){if(e.target===ov)cl();});
 var g=document.getElementById('bsr-gs');
