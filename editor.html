@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invite Edit Mode</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1f2530; --line:#2a3140;
+    --txt:#e7ecf3; --muted:#8b97a8; --accent:#6ea8ff; --accent2:#37c98b;
+    --warn:#ffb454; --danger:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--bg); color:var(--txt);
+    font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex; flex-direction:column; height:100vh; overflow:hidden;
+  }
+  /* top toolbar */
+  #bar{
+    display:flex; align-items:center; gap:12px; padding:8px 14px;
+    background:var(--panel); border-bottom:1px solid var(--line); flex:0 0 auto;
+  }
+  #bar h1{font-size:14px; margin:0 8px 0 0; font-weight:600; letter-spacing:.3px}
+  #bar .sp{flex:1}
+  .btn{
+    appearance:none; border:1px solid var(--line); background:var(--panel2);
+    color:var(--txt); padding:6px 12px; border-radius:7px; cursor:pointer;
+    font-size:13px; font-weight:500; transition:.12s;
+  }
+  .btn:hover{border-color:var(--accent); color:#fff}
+  .btn.on{background:var(--accent); border-color:var(--accent); color:#06122a}
+  .btn.good{background:var(--accent2); border-color:var(--accent2); color:#04221a}
+  .btn.ghost{background:transparent}
+  select{
+    background:var(--panel2); color:var(--txt); border:1px solid var(--line);
+    border-radius:7px; padding:6px 8px; font-size:13px;
+  }
+  .pill{font-size:12px; color:var(--muted)}
+  .pill b{color:var(--accent2)}
+  /* main split */
+  #main{display:flex; flex:1 1 auto; min-height:0}
+  #stage{
+    flex:1 1 auto; display:flex; align-items:flex-start; justify-content:center;
+    overflow:auto; padding:20px; background:
+      repeating-linear-gradient(45deg,#0c0e12 0 10px,#0e1116 10px 20px);
+  }
+  #frameWrap{
+    width:390px; flex:0 0 auto; border:1px solid var(--line); border-radius:16px;
+    overflow:hidden; background:#fff; box-shadow:0 12px 40px rgba(0,0,0,.5);
+  }
+  #frame{width:390px; height:1400px; border:0; display:block}
+  /* right panel */
+  #panel{
+    flex:0 0 340px; background:var(--panel); border-left:1px solid var(--line);
+    display:flex; flex-direction:column; min-height:0;
+  }
+  #panel .hd{padding:12px 14px; border-bottom:1px solid var(--line); font-weight:600}
+  #panel .body{padding:14px; overflow:auto; flex:1 1 auto}
+  .sel-empty{color:var(--muted); font-size:13px; padding:8px 0}
+  .field{margin-bottom:16px}
+  .field label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.4px}
+  .field textarea{
+    width:100%; min-height:70px; resize:vertical; background:var(--panel2);
+    color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:8px;
+    font:13px/1.4 inherit;
+  }
+  .row{display:flex; align-items:center; gap:8px}
+  .row input[type=range]{flex:1}
+  .row input[type=number]{
+    width:64px; background:var(--panel2); color:var(--txt);
+    border:1px solid var(--line); border-radius:6px; padding:5px 6px; font-size:13px;
+  }
+  .nudge{display:grid; grid-template-columns:repeat(3,40px); grid-template-rows:repeat(3,34px); gap:4px; justify-content:center}
+  .nudge .btn{padding:0; display:flex; align-items:center; justify-content:center; font-size:15px}
+  .nudge .ctr{font-size:11px; color:var(--muted); display:flex; align-items:center; justify-content:center}
+  .meta{font-size:11px; color:var(--muted); word-break:break-all; background:var(--panel2);
+    border:1px solid var(--line); border-radius:6px; padding:7px 8px; margin-top:4px}
+  .meta b{color:var(--accent)}
+  .offset-readout{font-size:12px; color:var(--accent2); margin-top:6px}
+  .hint{font-size:11px; color:var(--muted); margin-top:6px}
+  /* export overlay */
+  #exportWrap{
+    position:fixed; inset:0; background:rgba(0,0,0,.6); display:none;
+    align-items:center; justify-content:center; z-index:50;
+  }
+  #exportWrap.show{display:flex}
+  #exportBox{
+    width:min(720px,92vw); max-height:84vh; background:var(--panel);
+    border:1px solid var(--line); border-radius:12px; display:flex; flex-direction:column;
+  }
+  #exportBox .hd{display:flex; align-items:center; padding:12px 14px; border-bottom:1px solid var(--line)}
+  #exportBox .hd b{flex:1}
+  #exportBox textarea{
+    flex:1 1 auto; margin:0; border:0; background:#0b0d11; color:#cfe6ff;
+    font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; padding:14px; resize:none; min-height:340px;
+  }
+  #exportBox .ft{display:flex; gap:8px; padding:10px 14px; border-top:1px solid var(--line)}
+  .toast{
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+    background:var(--accent2); color:#04221a; padding:8px 16px; border-radius:8px;
+    font-weight:600; font-size:13px; opacity:0; transition:.2s; pointer-events:none; z-index:60;
+  }
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+  <div id="bar">
+    <h1>Invite Edit Mode</h1>
+    <select id="pageSel" title="Page">
+      <option value="kg.html">kg.html (Kyrgyz)</option>
+      <option value="kz.html">kz.html (Kazakh)</option>
+    </select>
+    <button class="btn" id="editToggle">Edit: OFF</button>
+    <span class="pill">Changes: <b id="changeCount">0</b></span>
+    <span class="sp"></span>
+    <button class="btn ghost" id="resetSelBtn" title="Revert the selected element">Revert selected</button>
+    <button class="btn good" id="exportBtn">Copy / Export</button>
+  </div>
+
+  <div id="main">
+    <div id="stage">
+      <div id="frameWrap">
+        <iframe id="frame"></iframe>
+      </div>
+    </div>
+
+    <div id="panel">
+      <div class="hd">Selected element</div>
+      <div class="body" id="panelBody">
+        <div class="sel-empty" id="emptyMsg">
+          Turn on <b>Edit</b>, then click any text in the phone preview to select it.
+        </div>
+
+        <div id="controls" style="display:none">
+          <div class="field">
+            <label>Element key</label>
+            <div class="meta"><b id="selKey">-</b></div>
+          </div>
+
+          <div class="field">
+            <label>Text</label>
+            <textarea id="txtInput" placeholder="(element text)"></textarea>
+            <div class="hint" id="txtHint"></div>
+          </div>
+
+          <div class="field">
+            <label>Font size (px)</label>
+            <div class="row">
+              <input type="range" id="fsRange" min="6" max="120" step="0.5">
+              <input type="number" id="fsNum" min="6" max="200" step="0.5">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Position nudge (px)</label>
+            <div class="nudge">
+              <div></div>
+              <button class="btn" data-dx="0" data-dy="-1">&#9650;</button>
+              <div></div>
+              <button class="btn" data-dx="-1" data-dy="0">&#9664;</button>
+              <div class="ctr">move</div>
+              <button class="btn" data-dx="1" data-dy="0">&#9654;</button>
+              <div></div>
+              <button class="btn" data-dx="0" data-dy="1">&#9660;</button>
+              <div></div>
+            </div>
+            <div class="row" style="margin-top:8px; justify-content:center">
+              <label style="margin:0">step</label>
+              <input type="number" id="stepNum" value="1" min="1" max="50" style="width:56px">
+            </div>
+            <div class="offset-readout" id="offReadout">offset: 0, 0 px</div>
+            <div class="hint">Tip: in the preview you can also <b>drag</b> the selected element.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="exportWrap">
+    <div id="exportBox">
+      <div class="hd"><b>Changeset</b>
+        <select id="exportFmt" style="margin-right:8px">
+          <option value="notes">Readable notes</option>
+          <option value="json">JSON</option>
+        </select>
+        <button class="btn ghost" id="exportClose">Close</button>
+      </div>
+      <textarea id="exportText" readonly spellcheck="false"></textarea>
+      <div class="ft">
+        <button class="btn good" id="copyBtn">Copy to clipboard</button>
+        <button class="btn ghost" id="clearBtn">Clear all changes</button>
+        <span class="pill" style="align-self:center; margin-left:auto" id="exportCount"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="editor.js"></script>
+</body>
+</html>
