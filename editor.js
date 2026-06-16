@@ -86,8 +86,9 @@
     history.replaceState(null, '', url);
     editOn = false; setEditBtn();
     clearSelectionUI();
-    // cache-bust on every load so we always fetch the freshest build
-    frame.src = p + '?_cb=' + Date.now();
+    // cache-bust on every load so we always fetch the freshest build;
+    // nogate=1 disables the opening-cover gate so the editor shows ALL content (cover+main+form)
+    frame.src = p + '?_cb=' + Date.now() + '&nogate=1';
   }
 
   frame.addEventListener('load', function () {
