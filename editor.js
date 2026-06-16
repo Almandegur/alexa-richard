@@ -7,16 +7,17 @@
   'use strict';
 
   // ---------- parent-side state ----------
+  var PAGES = ['kg.html', 'kz.html', 'index.html'];
   var qs = new URLSearchParams(location.search);
   var page = qs.get('page') || 'kg.html';
-  if (page !== 'kg.html' && page !== 'kz.html') page = 'kg.html';
+  if (PAGES.indexOf(page) === -1) page = 'kg.html';
 
   // changeset: { page: { key: { text, fontSize, dx, dy, orig:{...} } } }
   var STORE_KEY = 'inviteEditChangeset_v1';
   var changeset = loadStore();
 
   var frame = document.getElementById('frame');
-  var pageSel = document.getElementById('pageSel');
+  var pageBtns = document.getElementById('pageBtns');
   var editToggle = document.getElementById('editToggle');
   var changeCount = document.getElementById('changeCount');
   var emptyMsg = document.getElementById('emptyMsg');
@@ -42,7 +43,13 @@
   var editOn = false;
   var current = null; // { key, el } from the iframe
 
-  pageSel.value = page;
+  function setActivePageBtn() {
+    var btns = pageBtns.querySelectorAll('.pgbtn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('active', btns[i].getAttribute('data-page') === page);
+    }
+  }
+  setActivePageBtn();
 
   function loadStore() {
     try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
@@ -73,12 +80,14 @@
   // ---------- load page ----------
   function loadPage(p) {
     page = p;
+    setActivePageBtn();
     var url = new URL(location.href);
     url.searchParams.set('page', p);
     history.replaceState(null, '', url);
     editOn = false; setEditBtn();
     clearSelectionUI();
-    frame.src = p + '?_t=' + Date.now();
+    // cache-bust on every load so we always fetch the freshest build
+    frame.src = p + '?_cb=' + Date.now();
   }
 
   frame.addEventListener('load', function () {
@@ -86,7 +95,11 @@
     refreshCount();
   });
 
-  pageSel.addEventListener('change', function () { loadPage(pageSel.value); });
+  pageBtns.addEventListener('click', function (e) {
+    var btn = e.target.closest('.pgbtn');
+    if (!btn) return;
+    loadPage(btn.getAttribute('data-page'));
+  });
 
   // ---------- the injected agent (runs inside the iframe) ----------
   // We add it as a property of the iframe window and call it. It posts messages back.
