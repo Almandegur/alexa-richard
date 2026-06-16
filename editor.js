@@ -190,7 +190,9 @@
       while (node && node.nodeType === 1) {
         if (node.classList && (node.classList.contains('tn-atom') ||
             node.classList.contains('lab') || node.classList.contains('w1') ||
-            node.classList.contains('w2') || node.classList.contains('dgname'))) {
+            node.classList.contains('w2') || node.classList.contains('amp') ||
+            node.classList.contains('nm') || node.classList.contains('ev') ||
+            node.classList.contains('dgname'))) {
           return node;
         }
         node = node.parentElement;
@@ -214,10 +216,16 @@
       st.textContent =
         '.__edit_on [field^="tn_text_"],' +
         '.__edit_on .tn-atom,' +
-        '.__edit_on .bsr-sched .lab,' +
+        '.__edit_on .bsr-sched .lab,.__edit_on .bsr-sched .ev,' +
         '.__edit_on .bsr-hosts .lab,' +
-        '.__edit_on .dgname{cursor:pointer!important;}' +
-        '.__edit_on .bsr-sched,.__edit_on .bsr-hosts{pointer-events:auto!important;}' +
+        '.__edit_on .bsr-hosts .nm,.__edit_on .bsr-hosts .nm .w1,.__edit_on .bsr-hosts .nm .w2,.__edit_on .bsr-hosts .nm .amp,' +
+        '.__edit_on #bsr-card h2,.__edit_on #bsr-card .bsr-sub,.__edit_on #bsr-card label,' +
+        '.__edit_on .dgname,.__edit_on .dgname .w1,.__edit_on .dgname .w2,.__edit_on .dgname .amp{cursor:pointer!important;}' +
+        // every text-bearing custom block becomes hit-testable in edit mode
+        '.__edit_on .bsr-sched,.__edit_on .bsr-sched *,.__edit_on .bsr-hosts,.__edit_on .bsr-hosts *,' +
+        '.__edit_on .dgname,.__edit_on .dgname *,.__edit_on #bsr-card,.__edit_on #bsr-card *{pointer-events:auto!important;}' +
+        // venue title ships with pointer-events:none (so the photo is a map link); re-enable it for editing
+        '.__edit_on #rec2047657203 .tn-elem[data-elem-id="1776866271348000001"],.__edit_on #rec2047657203 .tn-elem[data-elem-id="1776866271348000001"] .tn-atom{pointer-events:auto!important;cursor:pointer!important;}' +
         '.__edit_hover{outline:2px dashed #6ea8ff!important;outline-offset:1px;}' +
         '.__edit_sel{outline:2px solid #37c98b!important;outline-offset:1px;background:rgba(55,201,139,.08)!important;}';
       doc.head.appendChild(st);
