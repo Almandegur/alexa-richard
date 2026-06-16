@@ -47,5 +47,9 @@
       <a class="lang" href="kz.html">Қазақша<small>Қазақ тілі</small></a>
     </div>
   </div>
+<script>
+/* always load a FRESH kg.html/kz.html (bust browser cache) so opening never shows a stale/broken build */
+document.querySelectorAll('a.lang').forEach(function(a){var u=a.getAttribute('href');a.setAttribute('href',u+(u.indexOf('?')<0?'?':'&')+'v='+Date.now());});
+</script>
 </body>
 </html>
