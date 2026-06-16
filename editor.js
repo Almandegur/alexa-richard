@@ -195,6 +195,14 @@
         }
         node = node.parentElement;
       }
+      // fallback: any text-bearing element, so EVERY text is selectable (not just Tilda atoms)
+      node = el;
+      while (node && node.nodeType === 1 && node !== doc.body) {
+        var tg = node.tagName.toLowerCase();
+        if (tg !== 'img' && tg !== 'svg' && tg !== 'script' && tg !== 'style' &&
+            (node.textContent || '').trim()) return node;
+        node = node.parentElement;
+      }
       return isTextTarget(el) ? el : null;
     }
 
