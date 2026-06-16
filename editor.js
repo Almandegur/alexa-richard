@@ -374,8 +374,27 @@
       if (!el) return;
       el.style.removeProperty('font-size');
       el.style.removeProperty('transform');
+      el.style.removeProperty('display');
       delete el.dataset.editDx; delete el.dataset.editDy;
       // text revert requires reload; signal parent
+    };
+    // create a new text box, append it, and select it
+    API.createBox = function () {
+      var d = doc.createElement('div');
+      d.id = '__editnew_' + Date.now();
+      d.className = '__editnew';
+      d.textContent = 'New text';
+      d.style.cssText = "position:absolute;left:28%;z-index:99999;font-family:'PT Serif',serif;font-size:24px;color:#1a1a1a;background:rgba(255,255,255,.55);padding:4px 8px;cursor:pointer;";
+      d.style.top = ((win.scrollY || 0) + 120) + 'px';
+      doc.body.appendChild(d);
+      selectEl(d);
+      return keyFor(d);
+    };
+    // hide an element (delete); recorded by the parent for export
+    API.deleteEl = function (key) {
+      var el = resolveKey(key);
+      if (el) el.style.setProperty('display', 'none', 'important');
+      if (selEl === el) selEl = null;
     };
 
     // turn on edit mode if it was on (page switch keeps it off by default)
@@ -421,7 +440,7 @@
     var hasText = typeof e.text === 'string';
     var hasFs = typeof e.fontSize === 'number';
     var hasOff = (e.dx || e.dy);
-    if (!hasText && !hasFs && !hasOff) delete pc[key];
+    if (!hasText && !hasFs && !hasOff && !e.created && !e.deleted) delete pc[key];
   }
   function recordText(key, text, origText) {
     var e = ensureEntry(key);
@@ -500,6 +519,30 @@
     }
   });
 
+  // ---------- create / delete text box ----------
+  var addTextBtn = document.getElementById('addTextBtn');
+  var delBtn = document.getElementById('delBtn');
+  addTextBtn.addEventListener('click', function () {
+    if (!editOn) { editOn = true; setEditBtn(); }
+    var a = api(); if (!a) return;
+    a.setEditMode(true);
+    var key = a.createBox();
+    if (key) {
+      var e = ensureEntry(key); e.created = true; e.text = 'New text';
+      saveStore(); refreshCount();
+      showToast('Text box added — edit it on the right');
+    }
+  });
+  delBtn.addEventListener('click', function () {
+    if (!current) { showToast('Nothing selected'); return; }
+    var a = api(); if (a) a.deleteEl(current.key);
+    var e = ensureEntry(current.key);
+    e.deleted = true; delete e.text; delete e.fontSize; delete e.dx; delete e.dy;
+    saveStore(); refreshCount();
+    clearSelectionUI();
+    showToast('Deleted (recorded for export)');
+  });
+
   // ---------- export ----------
   function buildExport(fmt) {
     var lines = [];
@@ -514,6 +557,8 @@
         json[p] = {};
         Object.keys(changeset[p]).forEach(function (k) {
           var e = changeset[p][k]; var o = {};
+          if (e.created) o.created = true;
+          if (e.deleted) o.deleted = true;
           if (typeof e.text === 'string') o.text = e.text;
           if (typeof e.fontSize === 'number') o.fontSizePx = e.fontSize;
           if (e.dx || e.dy) o.offsetPx = { dx: e.dx || 0, dy: e.dy || 0 };
@@ -529,7 +574,8 @@
       var pc = changeset[p];
       Object.keys(pc).forEach(function (k) {
         var e = pc[k];
-        lines.push('• ' + k);
+        if (e.deleted) { lines.push('• DELETE  ' + k); lines.push(''); return; }
+        lines.push((e.created ? '• ADD text box  ' : '• ') + k);
         if (typeof e.text === 'string') {
           lines.push('    text: ' + JSON.stringify(e.origText !== undefined ? e.origText : '') +
                      '  ->  ' + JSON.stringify(e.text));
