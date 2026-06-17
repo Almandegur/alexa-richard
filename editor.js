@@ -47,6 +47,7 @@
   var widthField = document.getElementById('widthField');
   var txtField = document.getElementById('txtField');
   var fsField = document.getElementById('fsField');
+  var vwNum = document.getElementById('vwNum');
 
   var editOn = false;
   var current = null; // { key, el } from the iframe
@@ -796,6 +797,18 @@
     current = null;
     controls.style.display = 'none';
     emptyMsg.style.display = 'block';
+  }
+
+  // ---------- preview width (set to YOUR phone for an exact match to the live transition) ----------
+  function setFrameWidth(px) {
+    px = Math.max(280, Math.min(900, px || 390));
+    frame.style.width = px + 'px';
+    var fw = document.getElementById('frameWrap');
+    if (fw) fw.style.width = px + 'px';
+  }
+  if (vwNum) {
+    vwNum.addEventListener('input', function () { setFrameWidth(parseInt(vwNum.value, 10)); });
+    setFrameWidth(parseInt(vwNum.value, 10) || 390);
   }
 
   // ---------- boot ----------
