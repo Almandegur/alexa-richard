@@ -229,6 +229,8 @@
         // hero couple name sits over the photo with z-index games; force it hit-testable so Бек/Софья are selectable
         '.__edit_on #rec2047601243 [data-elem-id="1776948176126"],.__edit_on #rec2047601243 [data-elem-id="1776948176126"] *{pointer-events:auto!important;}' +
         '.__edit_on #rec2047601243 [data-elem-id="1776948176126"] .w1,.__edit_on #rec2047601243 [data-elem-id="1776948176126"] .w2{cursor:pointer!important;}' +
+        // the opening cover (rec2292029533) floats over the hero even with nogate; hide it in edit mode so the couple names are clickable
+        '.__edit_on #rec2292029533{display:none!important;}' +
         '.__edit_hover{outline:2px dashed #6ea8ff!important;outline-offset:1px;}' +
         '.__edit_sel{outline:2px solid #37c98b!important;outline-offset:1px;background:rgba(55,201,139,.08)!important;}';
       doc.head.appendChild(st);
