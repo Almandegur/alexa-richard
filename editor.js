@@ -13,7 +13,7 @@
   if (PAGES.indexOf(page) === -1) page = 'kg.html';
 
   // changeset: { page: { key: { text, fontSize, dx, dy, orig:{...} } } }
-  var STORE_KEY = 'inviteEditChangeset_v1';
+  var STORE_KEY = 'inviteEditChangeset_v2';   // bumped -> old saved edits are dropped (fresh editor)
   var changeset = loadStore();
 
   var frame = document.getElementById('frame');
