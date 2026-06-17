@@ -130,6 +130,7 @@
     </div>
     <button class="btn" id="editToggle">Edit: OFF</button>
     <button class="btn" id="addTextBtn" title="Add a new text box">+ Text</button>
+    <button class="btn" id="addImgBtn" title="Add an image (paste a URL)">+ Image</button>
     <span class="pill">Changes: <b id="changeCount">0</b></span>
     <span class="sp"></span>
     <button class="btn ghost" id="resetSelBtn" title="Revert the selected element">Revert selected</button>
@@ -156,18 +157,39 @@
             <div class="meta"><b id="selKey">-</b></div>
           </div>
 
-          <div class="field">
+          <div class="field" id="txtField">
             <label>Text</label>
             <textarea id="txtInput" placeholder="(element text)"></textarea>
             <div class="hint" id="txtHint"></div>
           </div>
 
-          <div class="field">
+          <div class="field" id="fsField">
             <label>Font size (px)</label>
             <div class="row">
               <input type="range" id="fsRange" min="6" max="120" step="0.5">
               <input type="number" id="fsNum" min="6" max="200" step="0.5">
             </div>
+          </div>
+
+          <div class="field" id="fontField">
+            <label>Font family</label>
+            <select id="fontSel" style="width:100%">
+              <option value="">(unchanged)</option>
+              <option value="cursive">Cursive — Florisel (script)</option>
+              <option value="vibes">Cursive — Great Vibes</option>
+              <option value="classic">Classic — PT Serif</option>
+              <option value="classic-italic">Classic italic — PT Serif</option>
+            </select>
+            <div class="hint">Switch a name/heading between the script and the plain serif.</div>
+          </div>
+
+          <div class="field" id="widthField">
+            <label>Box width (px) — 0 = auto</label>
+            <div class="row">
+              <input type="range" id="wRange" min="0" max="390" step="1">
+              <input type="number" id="wNum" min="0" max="2000" step="1">
+            </div>
+            <div class="hint">Sets how wide the element is (controls wrapping / clipping). For images this is the picture size.</div>
           </div>
 
           <div class="field">
@@ -219,6 +241,6 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="editor.js?v=9"></script>
+  <script src="editor.js?v=10"></script>
 </body>
 </html>

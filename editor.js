@@ -39,6 +39,14 @@
   var exportClose = document.getElementById('exportClose');
   var resetSelBtn = document.getElementById('resetSelBtn');
   var toast = document.getElementById('toast');
+  var addImgBtn = document.getElementById('addImgBtn');
+  var fontSel = document.getElementById('fontSel');
+  var wRange = document.getElementById('wRange');
+  var wNum = document.getElementById('wNum');
+  var fontField = document.getElementById('fontField');
+  var widthField = document.getElementById('widthField');
+  var txtField = document.getElementById('txtField');
+  var fsField = document.getElementById('fsField');
 
   var editOn = false;
   var current = null; // { key, el } from the iframe
@@ -186,6 +194,9 @@
 
     // climb to the best target (tn-atom / lab / w1/w2) if clicked on inner span
     function bestTarget(el) {
+      // our own injected images are directly selectable (normally images are skipped)
+      if (el && el.tagName && el.tagName.toLowerCase() === 'img' &&
+          el.classList && el.classList.contains('__editimg')) return el;
       var node = el;
       while (node && node.nodeType === 1) {
         if (node.classList && (node.classList.contains('tn-atom') ||
@@ -234,6 +245,7 @@
         '#rec2292029533.bsr-on{position:relative!important;inset:auto!important;left:auto!important;top:auto!important;right:auto!important;width:100%!important;height:660px!important;z-index:1!important;display:block!important;}' +
         '#rec2292029533.bsr-on.bsr-hide,#rec2292029533.bsr-gone{display:block!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;}' +
         '#rec2292029533.bsr-on .t396__artboard{height:660px!important;min-height:660px!important;}' +
+        '.__edit_on .__editimg{pointer-events:auto!important;cursor:pointer!important;}' +
         '.__edit_hover{outline:2px dashed #6ea8ff!important;outline-offset:1px;}' +
         '.__edit_sel{outline:2px solid #37c98b!important;outline-offset:1px;background:rgba(55,201,139,.08)!important;}';
       doc.head.appendChild(st);
@@ -259,12 +271,32 @@
     API.keyFor = keyFor;
     API.resolveKey = resolveKey;
 
+    // font stacks the page actually ships (so a toggle matches the live look)
+    var FONT_STACKS = {
+      cursive: "'Florisel','Bad Script',cursive",
+      vibes: "'Great Vibes','FloriseRef','Florisel',cursive",
+      classic: "'PT Serif',serif",
+      'classic-italic': "'PT Serif',serif"
+    };
+    function applyFontFamily(el, val) {
+      if (!val) { el.style.removeProperty('font-family'); el.style.removeProperty('font-style'); return; }
+      el.style.setProperty('font-family', FONT_STACKS[val] || val, 'important');
+      el.style.setProperty('font-style', val === 'classic-italic' ? 'italic' : 'normal', 'important');
+    }
+    function applyWidth(el, px) {
+      if (!px) { el.style.removeProperty('width'); el.style.removeProperty('max-width'); return; }
+      el.style.setProperty('width', px + 'px', 'important');
+      el.style.setProperty('max-width', 'none', 'important');
+    }
+
     // apply a stored change to an element (used on load + live)
     API.applyChange = function (key, ch) {
       var el = resolveKey(key);
       if (!el) return false;
       if (typeof ch.text === 'string') setText(el, ch.text);
       if (typeof ch.fontSize === 'number') el.style.setProperty('font-size', ch.fontSize + 'px', 'important');
+      if (typeof ch.fontFamily === 'string') applyFontFamily(el, ch.fontFamily);
+      if (typeof ch.width === 'number') applyWidth(el, ch.width);
       applyOffset(el, ch.dx || 0, ch.dy || 0);
       return true;
     };
@@ -337,7 +369,9 @@
         dx: parseFloat(el.dataset.editDx || ch.dx || 0) || 0,
         dy: parseFloat(el.dataset.editDy || ch.dy || 0) || 0,
         tag: el.tagName.toLowerCase(),
-        cls: el.getAttribute('class') || ''
+        cls: el.getAttribute('class') || '',
+        width: Math.round(parseFloat(win.getComputedStyle(el).width) || 0),
+        isImg: el.tagName.toLowerCase() === 'img'
       });
     }
 
@@ -401,6 +435,8 @@
       if (!selEl) return;
       selEl.style.setProperty('font-size', px + 'px', 'important');
     };
+    API.setFontFamily = function (val) { if (selEl) applyFontFamily(selEl, val); };
+    API.setWidth = function (px) { if (selEl) applyWidth(selEl, px); };
     API.nudge = function (dx, dy) {
       if (!selEl) return null;
       var ndx = (parseFloat(selEl.dataset.editDx || 0) || 0) + dx;
@@ -414,6 +450,10 @@
       el.style.removeProperty('font-size');
       el.style.removeProperty('transform');
       el.style.removeProperty('display');
+      el.style.removeProperty('font-family');
+      el.style.removeProperty('font-style');
+      el.style.removeProperty('width');
+      el.style.removeProperty('max-width');
       delete el.dataset.editDx; delete el.dataset.editDy;
       // text revert requires reload; signal parent
     };
@@ -428,6 +468,18 @@
       doc.body.appendChild(d);
       selectEl(d);
       return keyFor(d);
+    };
+    // add an image element (URL), absolute-positioned, draggable + resizable, and select it
+    API.createImage = function (src) {
+      var im = doc.createElement('img');
+      im.id = '__editimg_' + Date.now();
+      im.className = '__editnew __editimg';
+      im.src = src; im.alt = '';
+      im.style.cssText = "position:absolute;left:28%;width:160px;height:auto;z-index:99999;display:block;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.25);";
+      im.style.top = ((win.scrollY || 0) + 120) + 'px';
+      doc.body.appendChild(im);
+      selectEl(im);
+      return keyFor(im);
     };
     // hide an element (delete); recorded by the parent for export
     API.deleteEl = function (key) {
@@ -454,6 +506,18 @@
     var fs = Math.round(info.fontSize * 10) / 10;
     fsRange.value = fs; fsNum.value = fs;
     offReadout.textContent = 'offset: ' + Math.round(info.dx) + ', ' + Math.round(info.dy) + ' px';
+    // font-family + width pulled from the live changeset (falls back to the element's computed width)
+    var stored = (changeset[page] && changeset[page][info.key]) || {};
+    fontSel.value = stored.fontFamily || '';
+    var w = (typeof stored.width === 'number') ? stored.width : (info.width || 0);
+    wRange.value = Math.min(w, parseInt(wRange.max, 10)); wNum.value = w;
+    // images: hide the text + font controls (not applicable), keep width as the resize control
+    var isImg = !!info.isImg;
+    txtField.style.display = isImg ? 'none' : '';
+    fsField.style.display = isImg ? 'none' : '';
+    fontField.style.display = isImg ? 'none' : '';
+    var db = document.getElementById('delBtn');
+    if (db) db.textContent = isImg ? 'Delete this image' : 'Delete this text box';
   };
   window.__editOnDrag = function (dx, dy) {
     offReadout.textContent = 'offset: ' + dx + ', ' + dy + ' px';
@@ -479,7 +543,9 @@
     var hasText = typeof e.text === 'string';
     var hasFs = typeof e.fontSize === 'number';
     var hasOff = (e.dx || e.dy);
-    if (!hasText && !hasFs && !hasOff && !e.created && !e.deleted) delete pc[key];
+    var hasFam = typeof e.fontFamily === 'string';
+    var hasW = typeof e.width === 'number';
+    if (!hasText && !hasFs && !hasOff && !hasFam && !hasW && !e.created && !e.deleted && !e.image) delete pc[key];
   }
   function recordText(key, text, origText) {
     var e = ensureEntry(key);
@@ -501,6 +567,17 @@
     if (current && current.key === key) {
       offReadout.textContent = 'offset: ' + dx + ', ' + dy + ' px';
     }
+  }
+  function recordFontFamily(key, val) {
+    var e = ensureEntry(key);
+    if (!val) { delete e.fontFamily; } else { e.fontFamily = val; }
+    pruneIfEmpty(key); saveStore(); refreshCount();
+  }
+  function recordWidth(key, px, origPx) {
+    var e = ensureEntry(key);
+    if (!px || Math.abs(px - origPx) < 0.5) { delete e.width; }
+    else { e.width = px; if (e.origWidth === undefined) e.origWidth = origPx; }
+    pruneIfEmpty(key); saveStore(); refreshCount();
   }
 
   // ---------- panel controls ----------
@@ -529,6 +606,21 @@
   }
   fsRange.addEventListener('input', function () { applyFs(parseFloat(fsRange.value)); });
   fsNum.addEventListener('input', function () { applyFs(parseFloat(fsNum.value)); });
+
+  fontSel.addEventListener('change', function () {
+    if (!current) return;
+    var a = api(); if (a) a.setFontFamily(fontSel.value);
+    recordFontFamily(current.key, fontSel.value);
+  });
+  function applyW(px) {
+    if (!current) return;
+    px = Math.max(0, Math.min(2000, px || 0));
+    wRange.value = Math.min(px, parseInt(wRange.max, 10)); wNum.value = px;
+    var a = api(); if (a) a.setWidth(px);
+    recordWidth(current.key, px, current.width || 0);
+  }
+  wRange.addEventListener('input', function () { applyW(parseFloat(wRange.value)); });
+  wNum.addEventListener('input', function () { applyW(parseFloat(wNum.value)); });
 
   document.querySelectorAll('.nudge .btn').forEach(function (b) {
     b.addEventListener('click', function () {
@@ -572,6 +664,19 @@
       showToast('Text box added — edit it on the right');
     }
   });
+  addImgBtn.addEventListener('click', function () {
+    var src = prompt('Image URL (https://… or a file already in the repo like venue.jpg):', '');
+    if (!src) return;
+    if (!editOn) { editOn = true; setEditBtn(); }
+    var a = api(); if (!a) return;
+    a.setEditMode(true);
+    var key = a.createImage(src.trim());
+    if (key) {
+      var e = ensureEntry(key); e.created = true; e.image = true; e.src = src.trim(); e.width = 160;
+      saveStore(); refreshCount();
+      showToast('Image added — drag to position, set width on the right');
+    }
+  });
   delBtn.addEventListener('click', function () {
     if (!current) { showToast('Nothing selected'); return; }
     var a = api(); if (a) a.deleteEl(current.key);
@@ -598,8 +703,11 @@
           var e = changeset[p][k]; var o = {};
           if (e.created) o.created = true;
           if (e.deleted) o.deleted = true;
+          if (e.image) { o.image = true; o.src = e.src; }
           if (typeof e.text === 'string') o.text = e.text;
           if (typeof e.fontSize === 'number') o.fontSizePx = e.fontSize;
+          if (typeof e.fontFamily === 'string') o.fontFamily = e.fontFamily;
+          if (typeof e.width === 'number') o.widthPx = e.width;
           if (e.dx || e.dy) o.offsetPx = { dx: e.dx || 0, dy: e.dy || 0 };
           json[p][k] = o;
         });
@@ -614,14 +722,24 @@
       Object.keys(pc).forEach(function (k) {
         var e = pc[k];
         if (e.deleted) { lines.push('• DELETE  ' + k); lines.push(''); return; }
-        lines.push((e.created ? '• ADD text box  ' : '• ') + k);
+        lines.push((e.created ? (e.image ? '• ADD image  ' : '• ADD text box  ') : '• ') + k);
         if (typeof e.text === 'string') {
           lines.push('    text: ' + JSON.stringify(e.origText !== undefined ? e.origText : '') +
                      '  ->  ' + JSON.stringify(e.text));
         }
+        if (e.image && e.src) {
+          lines.push('    image src: ' + e.src);
+        }
         if (typeof e.fontSize === 'number') {
           var from = e.origFontSize !== undefined ? (Math.round(e.origFontSize * 10) / 10) + 'px' : '?';
           lines.push('    font-size: ' + from + '  ->  ' + e.fontSize + 'px');
+        }
+        if (typeof e.fontFamily === 'string') {
+          lines.push('    font-family: -> ' + e.fontFamily + '  (cursive=Florisel script, vibes=Great Vibes, classic=PT Serif)');
+        }
+        if (typeof e.width === 'number') {
+          var fw = e.origWidth !== undefined ? Math.round(e.origWidth) + 'px' : '?';
+          lines.push('    width: ' + fw + '  ->  ' + e.width + 'px');
         }
         if (e.dx || e.dy) {
           lines.push('    offset: translate(' + (e.dx || 0) + 'px, ' + (e.dy || 0) + 'px)');
@@ -635,6 +753,9 @@
     lines.push('                 atom rule; for .bsr-/.dgname, the custom CSS block.');
     lines.push('offset        -> a visual translate() to apply; convert to top/left or');
     lines.push('                 margin in source as appropriate.');
+    lines.push('font-family   -> set the family on the element CSS (cursive=script, classic=PT Serif).');
+    lines.push('width         -> set width (px) on the element; controls wrapping / clipping.');
+    lines.push('image         -> add an <img> in build.py at the shown offset + width.');
     return lines.join('\n');
   }
 
