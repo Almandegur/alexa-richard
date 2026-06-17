@@ -226,6 +226,9 @@
         '.__edit_on .dgname,.__edit_on .dgname *,.__edit_on #bsr-card,.__edit_on #bsr-card *{pointer-events:auto!important;}' +
         // venue title ships with pointer-events:none (so the photo is a map link); re-enable it for editing
         '.__edit_on #rec2047657203 .tn-elem[data-elem-id="1776866271348000001"],.__edit_on #rec2047657203 .tn-elem[data-elem-id="1776866271348000001"] .tn-atom{pointer-events:auto!important;cursor:pointer!important;}' +
+        // hero couple name sits over the photo with z-index games; force it hit-testable so Бек/Софья are selectable
+        '.__edit_on #rec2047601243 [data-elem-id="1776948176126"],.__edit_on #rec2047601243 [data-elem-id="1776948176126"] *{pointer-events:auto!important;}' +
+        '.__edit_on #rec2047601243 [data-elem-id="1776948176126"] .w1,.__edit_on #rec2047601243 [data-elem-id="1776948176126"] .w2{cursor:pointer!important;}' +
         '.__edit_hover{outline:2px dashed #6ea8ff!important;outline-offset:1px;}' +
         '.__edit_sel{outline:2px solid #37c98b!important;outline-offset:1px;background:rgba(55,201,139,.08)!important;}';
       doc.head.appendChild(st);
