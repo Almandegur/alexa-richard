@@ -204,8 +204,8 @@
             node.classList.contains('lab') || node.classList.contains('w1') ||
             node.classList.contains('w2') || node.classList.contains('amp') ||
             node.classList.contains('nm') || node.classList.contains('ev') ||
-            node.classList.contains('dgname'))) {
-          return node;
+            node.classList.contains('dgname') || node.classList.contains('bsr-orn'))) {
+          return node;  // bsr-orn = the gold ornament/flourish divs (selectable + draggable)
         }
         node = node.parentElement;
       }
@@ -236,6 +236,8 @@
         // every text-bearing custom block becomes hit-testable in edit mode
         '.__edit_on .bsr-sched,.__edit_on .bsr-sched *,.__edit_on .bsr-hosts,.__edit_on .bsr-hosts *,' +
         '.__edit_on .dgname,.__edit_on .dgname *,.__edit_on #bsr-card,.__edit_on #bsr-card *{pointer-events:auto!important;}' +
+        // gold ornaments / flourishes -> hit-testable so they can be selected, nudged, and dragged
+        '.__edit_on .bsr-orn,.__edit_on .bsr-orn *{pointer-events:auto!important;cursor:pointer!important;}' +
         // venue title ships with pointer-events:none (so the photo is a map link); re-enable it for editing
         '.__edit_on #rec2047657203 .tn-elem[data-elem-id="1776866271348000001"],.__edit_on #rec2047657203 .tn-elem[data-elem-id="1776866271348000001"] .tn-atom{pointer-events:auto!important;cursor:pointer!important;}' +
         // hero couple name sits over the photo with z-index games; force it hit-testable so Бек/Софья are selectable
