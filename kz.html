@@ -275,14 +275,18 @@ function addLetterOrn(){
 }
 /* group the sections into 5 full-page frames the scroll snaps between:
    1 couple names | 2 date+letter | 3 schedule | 4 location | 5 button+parents */
+/* self-healing: ensures a .bsr-frame exists per group AND that every section sits inside it
+   (Tilda's async init can leave a section behind on the first pass; re-runs re-home escapees). */
 function frameify(){
-  if(document.querySelector('.bsr-frame')) return;
   var groups=[['rec2047601243'],['rec2190837343','rec2191269323'],['rec2191866633'],['rec2047657203'],['rec2192331003','rec2047564733']];
   groups.forEach(function(ids){
-    var first=document.getElementById(ids[0]); if(!first||!first.parentNode) return;
-    var f=document.createElement('div'); f.className='bsr-frame';
-    first.parentNode.insertBefore(f, first);
-    ids.forEach(function(id){var s=document.getElementById(id); if(s) f.appendChild(s);});
+    try{
+      var first=document.getElementById(ids[0]); if(!first||!first.parentNode) return;
+      var f;
+      if((''+((first.parentElement||{}).className||'')).indexOf('bsr-frame')>=0){ f=first.parentElement; }
+      else { f=document.createElement('div'); f.className='bsr-frame'; first.parentNode.insertBefore(f, first); }
+      ids.forEach(function(id){var s=document.getElementById(id); if(s && s.parentElement!==f){ try{ f.appendChild(s); }catch(e){} }});
+    }catch(e){}
   });
 }
 function paint(){frameify();addHosts();diagHero();addSched();addOrnaments();addClouds();addLetterOrn();cover();}
