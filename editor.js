@@ -229,13 +229,30 @@
         // hero couple name sits over the photo with z-index games; force it hit-testable so Бек/Софья are selectable
         '.__edit_on #rec2047601243 [data-elem-id="1776948176126"],.__edit_on #rec2047601243 [data-elem-id="1776948176126"] *{pointer-events:auto!important;}' +
         '.__edit_on #rec2047601243 [data-elem-id="1776948176126"] .w1,.__edit_on #rec2047601243 [data-elem-id="1776948176126"] .w2{cursor:pointer!important;}' +
-        // the opening cover (rec2292029533) floats over the hero even with nogate; hide it ALWAYS in the
-        // editor so the preview shows the real invitation (not the closed envelope) and the couple names are clickable
-        '#rec2292029533{display:none!important;}' +
+        // show the opening cover/seal as a CONTAINED top section in the editor (matches the live opening,
+        // and since it is the first section the hero still sits below it, so couple names stay clickable)
+        '#rec2292029533.bsr-on{position:relative!important;inset:auto!important;left:auto!important;top:auto!important;right:auto!important;width:100%!important;height:660px!important;z-index:1!important;display:block!important;}' +
+        '#rec2292029533.bsr-on.bsr-hide,#rec2292029533.bsr-gone{display:block!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;}' +
+        '#rec2292029533.bsr-on .t396__artboard{height:660px!important;min-height:660px!important;}' +
         '.__edit_hover{outline:2px dashed #6ea8ff!important;outline-offset:1px;}' +
         '.__edit_sel{outline:2px solid #37c98b!important;outline-offset:1px;background:rgba(55,201,139,.08)!important;}';
       doc.head.appendChild(st);
     }
+
+    // force the opening cover/seal to render (the page skips it under ?nogate) so the editor shows it like live
+    (function showCover(){
+      var cov = doc.getElementById('rec2292029533');
+      if (!cov) return;
+      cov.classList.add('bsr-on');
+      cov.classList.remove('bsr-hide', 'bsr-gone');
+      var ab = cov.querySelector('.t396__artboard');
+      if (ab && !ab.querySelector('.bsr-ctitle')) {
+        var t = doc.createElement('div');
+        t.className = 'bsr-ctitle';
+        t.innerHTML = '<span class="t1">ҮЙЛӨНҮҮ ТОЙГО</span><span class="t2">Чакыруу</span>';
+        ab.appendChild(t);
+      }
+    })();
 
     // expose an API on the iframe window
     var API = win.__editAPI = win.__editAPI || {};
