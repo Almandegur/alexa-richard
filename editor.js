@@ -13,7 +13,7 @@
   if (PAGES.indexOf(page) === -1) page = 'kg.html';
 
   // changeset: { page: { key: { text, fontSize, dx, dy, orig:{...} } } }
-  var STORE_KEY = 'inviteEditChangeset_v3';   // bumped -> old saved edits dropped (stops stale offsets compounding on the baked build)
+  var STORE_KEY = 'inviteEditChangeset_v4';   // bumped each bake -> editor always starts fresh from the latest build (no offset compounding)
   var changeset = loadStore();
 
   var frame = document.getElementById('frame');
