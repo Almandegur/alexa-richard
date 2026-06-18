@@ -1,0 +1,15 @@
+# Static pre-built site (build.py runs locally; kg.html/kz.html/index.html are committed).
+# Netlify just publishes the repo root, no build step.
+[build]
+  publish = "."
+  command = ""
+
+# Send the bare /kg and /kz pretty paths to the real files.
+[[redirects]]
+  from = "/kg"
+  to = "/kg.html"
+  status = 200
+[[redirects]]
+  from = "/kz"
+  to = "/kz.html"
+  status = 200
