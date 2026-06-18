@@ -13,7 +13,7 @@
   if (PAGES.indexOf(page) === -1) page = 'kg.html';
 
   // changeset: { page: { key: { text, fontSize, dx, dy, orig:{...} } } }
-  var STORE_KEY = 'inviteEditChangeset_v6';   // bumped after the revert -> clean slate against the restored build
+  var STORE_KEY = 'inviteEditChangeset_v7';   // bumped after baking the font/offset export -> clean slate vs new build
   var changeset = loadStore();
 
   var frame = document.getElementById('frame');
