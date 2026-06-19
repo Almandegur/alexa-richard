@@ -198,6 +198,20 @@
       // our own injected images are directly selectable (normally images are skipped)
       if (el && el.tagName && el.tagName.toLowerCase() === 'img' &&
           el.classList && el.classList.contains('__editimg')) return el;
+      // DATE SQUARES (Option-10 tiles): clicking any part of the date-reveal selects the WHOLE
+      // date block, so all three squares move together. Block = the tn-elem holding .tdr-root.
+      var dn = el;
+      while (dn && dn.nodeType === 1) {
+        if (dn.classList && (dn.classList.contains('tdr-root') || dn.classList.contains('tdr-scene') ||
+            dn.classList.contains('tdr-inner') || dn.classList.contains('tdr-panels') ||
+            dn.classList.contains('tdr-panel') || dn.classList.contains('tdr-tile') ||
+            dn.classList.contains('tdr-tile-bg') || dn.classList.contains('tdr-num'))) {
+          var de = doc.querySelector('#rec2190837343 .tn-elem[data-elem-id="1776856626015"]');
+          if (de) return de;
+          break;
+        }
+        dn = dn.parentElement;
+      }
       var node = el;
       while (node && node.nodeType === 1) {
         if (node.classList && (node.classList.contains('tn-atom') ||
@@ -243,6 +257,9 @@
         // hero couple name sits over the photo with z-index games; force it hit-testable so Бек/Софья are selectable
         '.__edit_on #rec2047601243 [data-elem-id="1776948176126"],.__edit_on #rec2047601243 [data-elem-id="1776948176126"] *{pointer-events:auto!important;}' +
         '.__edit_on #rec2047601243 [data-elem-id="1776948176126"] .w1,.__edit_on #rec2047601243 [data-elem-id="1776948176126"] .w2{cursor:pointer!important;}' +
+        // DATE SQUARES (Option-10 tiles): hit-testable + draggable in edit mode (whole date block moves)
+        '.__edit_on #rec2190837343 .tdr-root,.__edit_on #rec2190837343 .tdr-root *{pointer-events:auto!important;}' +
+        '.__edit_on #rec2190837343 .tdr-tile,.__edit_on #rec2190837343 .tdr-panels,.__edit_on #rec2190837343 .tdr-num{cursor:pointer!important;}' +
         // show the opening cover/seal as a CONTAINED top section in the editor (matches the live opening,
         // and since it is the first section the hero still sits below it, so couple names stay clickable)
         '#rec2292029533.bsr-on{position:relative!important;inset:auto!important;left:auto!important;top:auto!important;right:auto!important;width:100%!important;height:660px!important;z-index:1!important;display:block!important;}' +
