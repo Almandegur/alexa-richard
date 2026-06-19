@@ -13,7 +13,7 @@
   if (PAGES.indexOf(page) === -1) page = 'kg.html';
 
   // changeset: { page: { key: { text, fontSize, dx, dy, orig:{...} } } }
-  var STORE_KEY = 'inviteEditChangeset_v9';   // bumped after baking date scale 0.48 -> clean slate vs new build
+  var STORE_KEY = 'inviteEditChangeset_v10';  // bumped after baking date scale 0.6 + 20px down -> clean slate
   var changeset = loadStore();
 
   var frame = document.getElementById('frame');
@@ -201,14 +201,11 @@
       // our own injected images are directly selectable (normally images are skipped)
       if (el && el.tagName && el.tagName.toLowerCase() === 'img' &&
           el.classList && el.classList.contains('__editimg')) return el;
-      // DATE SQUARES (Option-10 tiles): clicking any part of the date-reveal selects the WHOLE
-      // date block, so all three squares move together. Block = the tn-elem holding .tdr-root.
+      // DATE: ANY click inside the date section selects ONE canonical block (the tn-elem holding
+      // .tdr-root) so the size/position is always recorded on a single key (no duplicate entries).
       var dn = el;
       while (dn && dn.nodeType === 1) {
-        if (dn.classList && (dn.classList.contains('tdr-root') || dn.classList.contains('tdr-scene') ||
-            dn.classList.contains('tdr-inner') || dn.classList.contains('tdr-panels') ||
-            dn.classList.contains('tdr-panel') || dn.classList.contains('tdr-tile') ||
-            dn.classList.contains('tdr-tile-bg') || dn.classList.contains('tdr-num'))) {
+        if (dn.id === 'rec2190837343') {
           var de = doc.querySelector('#rec2190837343 .tn-elem[data-elem-id="1776856626015"]');
           if (de) return de;
           break;
