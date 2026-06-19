@@ -47,6 +47,9 @@
   var widthField = document.getElementById('widthField');
   var txtField = document.getElementById('txtField');
   var fsField = document.getElementById('fsField');
+  var scaleField = document.getElementById('scaleField');
+  var scaleRange = document.getElementById('scaleRange');
+  var scaleNum = document.getElementById('scaleNum');
   var vwNum = document.getElementById('vwNum');
 
   var editOn = false;
@@ -308,6 +311,14 @@
       el.style.setProperty('width', px + 'px', 'important');
       el.style.setProperty('max-width', 'none', 'important');
     }
+    // DATE squares size: scale the whole .tdr-root (keeps the build's translateY + top origin)
+    function applyDateScale(s) {
+      var dr = doc.querySelector('#rec2190837343 .tdr-root');
+      if (!dr) return;
+      dr.style.setProperty('transform', 'translateY(5px) scale(' + s + ')', 'important');
+      dr.style.setProperty('transform-origin', 'center top', 'important');
+    }
+    API.setScale = function (s) { applyDateScale(s); };
 
     // apply a stored change to an element (used on load + live)
     API.applyChange = function (key, ch) {
@@ -317,6 +328,7 @@
       if (typeof ch.fontSize === 'number') el.style.setProperty('font-size', ch.fontSize + 'px', 'important');
       if (typeof ch.fontFamily === 'string') applyFontFamily(el, ch.fontFamily);
       if (typeof ch.width === 'number') applyWidth(el, ch.width);
+      if (typeof ch.scale === 'number') applyDateScale(ch.scale);
       applyOffset(el, ch.dx || 0, ch.dy || 0);
       return true;
     };
@@ -382,6 +394,15 @@
       selEl = el; el.classList.add('__edit_sel');
       var key = keyFor(el);
       var ch = pc[key] || {};
+      var droot = el.querySelector ? el.querySelector('.tdr-root') : null;
+      var dscale = 1;
+      if (droot) {
+        var mt = win.getComputedStyle(droot).transform;
+        if (mt && mt.indexOf('matrix') === 0) {
+          var sa = parseFloat(mt.slice(mt.indexOf('(') + 1).split(',')[0]);
+          if (sa) dscale = Math.round(sa * 100) / 100;
+        }
+      }
       win.parent.__editOnSelect({
         key: key,
         text: API.getText(el),
@@ -391,7 +412,9 @@
         tag: el.tagName.toLowerCase(),
         cls: el.getAttribute('class') || '',
         width: Math.round(parseFloat(win.getComputedStyle(el).width) || 0),
-        isImg: el.tagName.toLowerCase() === 'img'
+        isImg: el.tagName.toLowerCase() === 'img',
+        isDate: !!droot,
+        scale: dscale
       });
     }
 
@@ -531,6 +554,14 @@
     fontSel.value = stored.fontFamily || '';
     var w = (typeof stored.width === 'number') ? stored.width : (info.width || 0);
     wRange.value = Math.min(w, parseInt(wRange.max, 10)); wNum.value = w;
+    // DATE squares: show the size (scale) control only for the date block
+    var isDate = !!info.isDate;
+    if (scaleField) {
+      scaleField.style.display = isDate ? '' : 'none';
+      var sc = (typeof stored.scale === 'number') ? stored.scale : (info.scale || 1);
+      if (scaleRange) scaleRange.value = sc;
+      if (scaleNum) scaleNum.value = sc;
+    }
     // images: hide the text + font controls (not applicable), keep width as the resize control
     var isImg = !!info.isImg;
     txtField.style.display = isImg ? 'none' : '';
@@ -565,7 +596,8 @@
     var hasOff = (e.dx || e.dy);
     var hasFam = typeof e.fontFamily === 'string';
     var hasW = typeof e.width === 'number';
-    if (!hasText && !hasFs && !hasOff && !hasFam && !hasW && !e.created && !e.deleted && !e.image) delete pc[key];
+    var hasScale = typeof e.scale === 'number';
+    if (!hasText && !hasFs && !hasOff && !hasFam && !hasW && !hasScale && !e.created && !e.deleted && !e.image) delete pc[key];
   }
   function recordText(key, text, origText) {
     var e = ensureEntry(key);
@@ -597,6 +629,12 @@
     var e = ensureEntry(key);
     if (!px || Math.abs(px - origPx) < 0.5) { delete e.width; }
     else { e.width = px; if (e.origWidth === undefined) e.origWidth = origPx; }
+    pruneIfEmpty(key); saveStore(); refreshCount();
+  }
+  function recordScale(key, s, origS) {
+    var e = ensureEntry(key);
+    if (Math.abs(s - (origS || 1)) < 0.005) { delete e.scale; }
+    else { e.scale = s; if (e.origScale === undefined) e.origScale = origS; }
     pruneIfEmpty(key); saveStore(); refreshCount();
   }
 
@@ -641,6 +679,16 @@
   }
   wRange.addEventListener('input', function () { applyW(parseFloat(wRange.value)); });
   wNum.addEventListener('input', function () { applyW(parseFloat(wNum.value)); });
+  function applyScaleVal(s) {
+    if (!current) return;
+    s = Math.max(0.3, Math.min(1.5, s || 1));
+    if (scaleRange) scaleRange.value = s;
+    if (scaleNum) scaleNum.value = s;
+    var a = api(); if (a && a.setScale) a.setScale(s);
+    recordScale(current.key, s, (current.scale || 1));
+  }
+  if (scaleRange) scaleRange.addEventListener('input', function () { applyScaleVal(parseFloat(scaleRange.value)); });
+  if (scaleNum) scaleNum.addEventListener('input', function () { applyScaleVal(parseFloat(scaleNum.value)); });
 
   document.querySelectorAll('.nudge .btn').forEach(function (b) {
     b.addEventListener('click', function () {
@@ -728,6 +776,7 @@
           if (typeof e.fontSize === 'number') o.fontSizePx = e.fontSize;
           if (typeof e.fontFamily === 'string') o.fontFamily = e.fontFamily;
           if (typeof e.width === 'number') o.widthPx = e.width;
+          if (typeof e.scale === 'number') o.scale = e.scale;
           if (e.dx || e.dy) o.offsetPx = { dx: e.dx || 0, dy: e.dy || 0 };
           json[p][k] = o;
         });
@@ -760,6 +809,10 @@
         if (typeof e.width === 'number') {
           var fw = e.origWidth !== undefined ? Math.round(e.origWidth) + 'px' : '?';
           lines.push('    width: ' + fw + '  ->  ' + e.width + 'px');
+        }
+        if (typeof e.scale === 'number') {
+          var fsc = e.origScale !== undefined ? e.origScale : 1;
+          lines.push('    scale: ' + fsc + '  ->  ' + e.scale + '   (date squares size; bake into #rec2190837343 .tdr-root scale)');
         }
         if (e.dx || e.dy) {
           lines.push('    offset: translate(' + (e.dx || 0) + 'px, ' + (e.dy || 0) + 'px)');
