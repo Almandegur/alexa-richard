@@ -277,12 +277,20 @@ function setStack(){
 function music(){
   if(/nogate/.test(location.search)) return;
   var au=document.getElementById('bsr-music'); if(!au||au.__bsr) return; au.__bsr=1;
-  var btn=document.getElementById('bsr-mute'); var started=false;
-  au.volume=0;
-  function ramp(){var v=0;var t=setInterval(function(){v+=0.05;if(v>=0.8){v=0.8;clearInterval(t);}au.volume=v;},60);}
-  function start(){ if(started)return; var p=au.play(); var ok=function(){started=true;ramp();if(btn){btn.classList.add('on');btn.textContent='♪';}}; if(p&&p.then){p.then(ok).catch(function(){});}else{ok();} }
-  ['touchstart','click','keydown'].forEach(function(ev){document.addEventListener(ev,start,{passive:true});});
-  if(btn){btn.addEventListener('click',function(e){e.stopPropagation();if(!started){start();return;}au.muted=!au.muted;btn.textContent=au.muted?'🔇':'♪';});}
+  var btn=document.getElementById('bsr-mute'); var started=false, userMuted=false;
+  au.loop=true; au.volume=0;   // loop as a PROPERTY (attribute is ignored on some browsers/OS)
+  /* loop fallback: if a browser still drops the loop, restart from the top on 'ended' */
+  au.addEventListener('ended',function(){ try{ au.currentTime=0; var r=au.play(); if(r&&r.catch) r.catch(function(){}); }catch(e){} });
+  function ramp(){var v=0;clearInterval(au.__rmp);au.volume=0;au.__rmp=setInterval(function(){v+=0.05;if(v>=0.8){v=0.8;clearInterval(au.__rmp);}au.volume=v;},60);}
+  function play(){ var r=au.play(); if(r&&r.catch) r.catch(function(){}); return r; }
+  function start(){ if(started||userMuted)return; var p=au.play(); var ok=function(){started=true;ramp();if(btn){btn.classList.add('on');btn.textContent='♪';}}; if(p&&p.then){p.then(ok).catch(function(){});}else{ok();} }
+  ['click','touchend','keydown'].forEach(function(ev){document.addEventListener(ev,start,{passive:true});});
+  if(btn){btn.addEventListener('click',function(e){e.stopPropagation();if(!started){start();return;}userMuted=!userMuted;au.muted=userMuted;btn.textContent=userMuted?'🔇':'♪';});}
+  /* leaving the tab -> PAUSE (so it never starts "after you leave"); returning -> RESUME (unless you muted it).
+     visibilitychange handles tab switches; pagehide/pageshow cover iOS Safari + back-forward cache. */
+  document.addEventListener('visibilitychange',function(){ if(document.hidden){au.pause();} else if(started&&!userMuted){play();} });
+  window.addEventListener('pagehide',function(){ au.pause(); });
+  window.addEventListener('pageshow',function(){ if(started&&!userMuted&&!document.hidden){play();} });
 }
 function paint(){frameify();setStack();addHosts();diagHero();addSched();addOrnaments();addClouds();addLetterOrn();fixVideo();cover();music();}
 paint();setTimeout(paint,1500);setTimeout(paint,3500);
