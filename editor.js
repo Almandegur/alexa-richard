@@ -13,7 +13,7 @@
   if (PAGES.indexOf(page) === -1) page = 'kg.html';
 
   // changeset: { page: { key: { text, fontSize, dx, dy, orig:{...} } } }
-  var STORE_KEY = 'inviteEditChangeset_v10';  // bumped after baking date scale 0.6 + 20px down -> clean slate
+  var STORE_KEY = 'inviteEditChangeset_v11';  // bumped after baking date scale 0.8 + 16px up -> clean slate
   var changeset = loadStore();
 
   var frame = document.getElementById('frame');
